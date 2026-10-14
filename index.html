@@ -68,6 +68,12 @@ svg .region { fill: var(--region); }
 .legend .lg-shape { flex: 1 1 260px; }
 .legend .lg-color { flex: 1 1 260px; justify-content: flex-end; }
 .legend .lg-note { flex-basis: 100%; }
+.plothead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 16px; }
+.plothead .shown { font-size: 0.78rem; color: var(--muted); display: inline-flex; align-items: center; gap: 2px; }
+.showsel { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.showsel button { border: 0; border-right: 1px solid var(--line); background: var(--bg); color: var(--ink); font: inherit; font-size: 0.76rem; padding: 3px 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 2px; }
+.showsel button:last-child { border-right: 0; }
+.showsel button[aria-pressed=true] { background: var(--accent); color: var(--panel); font-weight: 600; }
 .mk { display: inline-block; vertical-align: -1px; margin-right: 6px; overflow: visible; }
 @media (max-width: 640px) { .legend .lg-color { justify-content: flex-start; } }
 .tablewrap { overflow-x: auto; }
@@ -146,7 +152,7 @@ svg .box { fill: none; stroke: var(--ink); stroke-width: 1.5; }
   <main>
     <section class="card" id="card" aria-live="polite"></section>
     <section class="card">
-      <h2 id="plot-title"></h2>
+      <div class="plothead"><h2 id="plot-title"></h2><span class="shown" id="shown"></span></div>
       <div class="plotwrap"><svg id="plot" role="img" aria-label="Cases against income lost for each policy"></svg></div>
       <div class="legend" id="legend"></div>
     </section>
@@ -177,6 +183,9 @@ const DEFAULT = "17", FACTUAL = "7";
 const VACC_ONLY = ["11", "12", "13", "18", "25", "26", "27", "28", "29"], NPI_ONLY = ["1", "2", "3", "4", "5", "6", "8", "9", "10"];
 const kind = (k) => k === FACTUAL ? "fact" : VACC_ONLY.includes(k) ? "vacc" : NPI_ONLY.includes(k) ? "npi" : "both";
 const KIND = { vacc: "Vaccination policy", npi: "Closure (NPI) policy", both: "Vaccination + closures" };
+// which policies are shown: all, vaccination (triangle + circle) or NPI (square + circle); What happened always
+const SHOW = { all: ["All policies", ["vacc", "npi", "both"]], vacc: ["Vaccination policies", ["vacc", "both"]], npi: ["NPI policies", ["npi", "both"]] };
+const visible = (k) => k === FACTUAL || SHOW[st.show][1].includes(kind(k));
 // one SVG shape of radius r centred at (cx, cy); a = extra attributes
 function shape(kd, cx, cy, r, a) {
   if (kd === "vacc") { const h = r * 1.25; return `<path d="M${cx} ${cy - h} L${cx + h * 0.95} ${cy + h * 0.7} L${cx - h * 0.95} ${cy + h * 0.7} Z" ${a}/>`; }
@@ -223,14 +232,13 @@ function factNote() {
   const { F, s, w } = fact(), out = [];
   for (const [lab, L, stt] of [["Schools", F.school, s], ["Workplaces", F.work, w]]) {
     if (!stt.startsWith("partly")) continue;
-    const r = L.r.map(([a, b]) => a === b ? dshort(a) : `${dshort(a)} – ${dshort(b)}`);
-    out.push(`${lab} ${stt}: closed ${L.c} of ${F.n} days (${r.length > 3 ? r.slice(0, 3).join(", ") + ", …" : r.join(", ")})`);
+    out.push(`${lab} ${stt}: closed ${L.c} of ${F.n} days`);
   }
   return out;
 }
 const col = (k) => k === FACTUAL ? css("--ink") : css(GROUP[groupKey(k)][1]);
 const marker = (k) => icon(kind(k), col(k));
-const st = { h: "H2", view: "base", f: "36003", b: DEFAULT, a: 0, i: 0, s: 0, lvl: "high", sort: { key: "x", dir: 1 } };
+const st = { show: "all", h: "H2", view: "base", f: "36003", b: DEFAULT, a: 0, i: 0, s: 0, lvl: "high", sort: { key: "x", dir: 1 } };
 const levelOf = (a) => Object.keys(LEVELS).find((l) => a >= LEVELS[l][1] && a < LEVELS[l][2]);
 
 // ---- rows: x = cases, y = income days, z = school days (changes in the baseline view, absolute in the level view)
@@ -275,6 +283,8 @@ function compute() {
       r.ok = r.x <= st.a + 1e-9 && r.y <= st.i + 1e-9 && r.z <= st.s + 1e-9;
       r.q = r.d.filter((v) => v <= st.a + 1e-9).length / r.d.length; });
   } else { R = rowsLevel(); ks = Object.keys(R); }
+  Object.keys(R).forEach((k) => { if (!visible(k) && !(st.view === "base" && k === st.b)) delete R[k]; });
+  ks = ks.filter(visible);
   const F = ks.filter((k) => R[k].ok);
   const byA = [...F].sort((p, q) => R[p].x - R[q].x || R[p].y - R[q].y);
   const byI = [...F].sort((p, q) => R[p].y - R[q].y || R[p].z - R[q].z || R[p].x - R[q].x);
@@ -296,7 +306,7 @@ function render() {
   if (base) { $("#lav").textContent = sg(st.a); $("#liv").textContent = sg(st.i, 1) + " d"; $("#lsv").textContent = sg(st.s) + " d"; }
   else {
     const all = rowsLevel(); // counts per level for the buttons
-    const cnt = (l) => Object.values(all).filter((r) => levelOf(r.x) === l).length;
+    const cnt = (l) => Object.values(all).filter((r) => visible(r.k) && levelOf(r.x) === l).length;
     $("#levels").innerHTML = Object.entries(LEVELS).map(([l, [lab]]) => `<button data-l="${l}" style="--lvc:var(--lv-${l})" aria-pressed="${l === st.lvl}">${lab}<span class="cnt">${cnt(l)} policies</span></button>`).join("");
     $("#levels").querySelectorAll("button").forEach((b) => (b.onclick = () => { st.lvl = b.dataset.l; render(); }));
   }
@@ -312,6 +322,7 @@ function render() {
     </div>${flags}`
     : `<p class="answer">${base ? "No policy fits these limits. Loosen one." : `No policy leads to CDC ${LEVELS[st.lvl][0]} in ${c.name}.`}</p>${flags}`;
   $("#plot-title").textContent = base ? "Change from the baseline" : "Cases and income lost";
+  $("#shown").innerHTML = `Showing: ${SHOW[st.show][0]}&nbsp;` + SHOW[st.show][1].map((kd) => icon(kd, css("--muted"))).join("") + ` + ${icon("fact", css("--ink"))}What happened`;
   $("#eq").textContent = EQ[st.view];
   plot(R, new Set(list)); table(R, list);
 }
@@ -359,14 +370,17 @@ function plot(R, listSet) {
       t.style.left = Math.min(e.clientX + 12, innerWidth - 270) + "px"; t.style.top = e.clientY + 12 + "px"; };
     el.onmouseleave = () => ($("#tip").hidden = true); });
   const groups = [...new Set(Object.keys(R).filter((k) => k !== FACTUAL).map(groupKey))];
-  const kinds = [...new Set(Object.keys(R).map(kind))].filter((kd) => kd !== "fact");
+  const kinds = [...new Set(Object.keys(POL()).filter(visible).map(kind))].filter((kd) => kd !== "fact");
   const grey = css("--muted");
   $("#legend").innerHTML =
-    `<div class="lg lg-shape">` + ["vacc", "npi", "both"].filter((kd) => kinds.includes(kd)).map((kd) => `<span>${icon(kd, grey)}${KIND[kd]}</span>`).join("") +
+    `<div class="lg lg-shape"><span>Show</span><span class="showsel" role="group" aria-label="Policies to show">` +
+      Object.entries(SHOW).map(([key, [lab, kds]]) => `<button data-show="${key}" aria-pressed="${st.show === key}">${key === "all" ? "All" : lab.split(" ")[0]}${key === "all" ? "" : " " + kds.map((kd) => icon(kd, st.show === key ? css("--panel") : grey)).join("")}</button>`).join("") + `</span>` +
+      ["vacc", "npi", "both"].filter((kd) => kinds.includes(kd)).map((kd) => `<span>${icon(kd, grey)}${KIND[kd]}</span>`).join("") +
       `<span>${icon("fact", css("--ink"))}What happened</span>` + (base ? `<span>${icon("fact", css("--panel"), css("--ink"))}Baseline</span>` : "") + `</div>` +
     `<div class="lg lg-color">` + groups.map((gk) => `<span><span class="dot" style="background:${css(GROUP[gk][1])};margin-right:0"></span>${groupLabel(gk)}${gk === FG && factNote().length ? "*" : ""}</span>`).join("") + `</div>` +
     `<div class="lg lg-note"><span>${base ? "Shaded: within limits · outlined: top 5" : "Box: policies at the selected level"}</span></div>` +
     (groups.includes(FG) && factNote().length ? `<div class="lg lg-note" style="display:block">` + factNote().map((t) => `<div>* ${t}</div>`).join("") + `</div>` : "");
+  $("#legend").querySelectorAll("[data-show]").forEach((b) => (b.onclick = () => { st.show = b.dataset.show; render(); }));
 }
 
 function table(R, list) {
