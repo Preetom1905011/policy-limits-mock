@@ -322,7 +322,7 @@ function render() {
     </div>${flags}`
     : `<p class="answer">${base ? "No policy fits these limits. Loosen one." : `No policy leads to CDC ${LEVELS[st.lvl][0]} in ${c.name}.`}</p>${flags}`;
   $("#plot-title").textContent = base ? "Change from the baseline" : "Cases and income lost";
-  $("#shown").innerHTML = `Showing: ${SHOW[st.show][0]}&nbsp;` + SHOW[st.show][1].map((kd) => icon(kd, css("--muted"))).join("") + ` + ${icon("fact", css("--ink"))}What happened`;
+  $("#shown").textContent = `Showing: ${SHOW[st.show][0]}`;
   $("#eq").textContent = EQ[st.view];
   plot(R, new Set(list)); table(R, list);
 }
