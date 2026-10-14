@@ -74,6 +74,10 @@ svg .region { fill: var(--region); }
 .showsel button { border: 0; border-right: 1px solid var(--line); background: var(--bg); color: var(--ink); font: inherit; font-size: 0.76rem; padding: 3px 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 2px; }
 .showsel button:last-child { border-right: 0; }
 .showsel button[aria-pressed=true] { background: var(--accent); color: var(--panel); font-weight: 600; }
+.info { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; border: 1px solid var(--muted); border-radius: 50%; font-family: var(--mono); font-size: 0.66rem; font-weight: 600; color: var(--muted); cursor: help; vertical-align: 1px; margin-left: 2px; }
+.info:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.infotip { visibility: hidden; opacity: 0; position: absolute; left: 50%; top: calc(100% + 6px); transform: translateX(-50%); width: 250px; max-width: 70vw; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; font-family: var(--sans); font-size: 0.78rem; font-weight: 400; line-height: 1.4; box-shadow: 0 2px 8px rgba(0,0,0,.15); z-index: 6; text-align: left; transition: opacity .12s; }
+.info:hover .infotip, .info:focus .infotip, .info:focus-within .infotip { visibility: visible; opacity: 1; }
 .mk { display: inline-block; vertical-align: -1px; margin-right: 6px; overflow: visible; }
 @media (max-width: 640px) { .legend .lg-color { justify-content: flex-start; } }
 .tablewrap { overflow-x: auto; }
@@ -127,7 +131,7 @@ svg .box { fill: none; stroke: var(--ink); stroke-width: 1.5; }
         <input id="la" type="range">
       </div>
       <div class="slider">
-        <div class="row"><label for="li">Extra income days lost, at most</label><span class="val" id="liv"></span></div>
+        <div class="row"><span><label for="li">Extra income days lost, at most</label> <span class="info" tabindex="0" role="button" aria-label="What is an income day?" aria-describedby="li-def">i<span class="infotip" role="tooltip" id="li-def"><b>1 income day</b> = one normal day of the county's total work output (value added by all its workers). Income days lost = output lost to workplace closures (after work done from home), to parents staying home when schools close, and to sick workers, divided by that daily output.</span></span></span><span class="val" id="liv"></span></div>
         <input id="li" type="range">
       </div>
       <div class="slider">
@@ -159,9 +163,6 @@ svg .box { fill: none; stroke: var(--ink); stroke-width: 1.5; }
     <section class="card">
       <h2 id="tbl-title"></h2>
       <div class="tablewrap"><table id="tbl"></table></div>
-      <details><summary>How this is computed</summary>
-        <div class="eq" id="eq"></div>
-      </details>
     </section>
   </main>
 </div>
@@ -323,7 +324,6 @@ function render() {
     : `<p class="answer">${base ? "No policy fits these limits. Loosen one." : `No policy leads to CDC ${LEVELS[st.lvl][0]} in ${c.name}.`}</p>${flags}`;
   $("#plot-title").textContent = base ? "Change from the baseline" : "Cases and income lost";
   $("#shown").textContent = `Showing: ${SHOW[st.show][0]}`;
-  $("#eq").textContent = EQ[st.view];
   plot(R, new Set(list)); table(R, list);
 }
 
