@@ -184,9 +184,9 @@ const DEFAULT = "17", FACTUAL = "7";
 // uniform vaccination (not the observed allocation), so they change both levers.
 const VACC_ONLY = ["11", "12", "13", "18", "25", "26", "27", "28", "29"], NPI_ONLY = ["1", "2", "3", "4", "5"];
 const kind = (k) => k === FACTUAL ? "fact" : VACC_ONLY.includes(k) ? "vacc" : NPI_ONLY.includes(k) ? "npi" : "both";
-const KIND = { vacc: "Vaccination policy", npi: "Closure (NPI) policy", both: "Vaccination + closures" };
+const KIND = { vacc: "Priority vaccination", npi: "Closure (NPI) policy", both: "Vaccination + closures" };
 // which policies are shown: all, vaccination (triangle + circle) or NPI (square + circle); Factual always
-const SHOW = { all: ["All policies", ["vacc", "npi", "both"]], vacc: ["Vaccination policies", ["vacc", "both"]], npi: ["NPI policies", ["npi", "both"]] };
+const SHOW = { all: ["All policies", ["vacc", "npi", "both"]], vacc: ["Priority vaccination", ["vacc", "both"]], npi: ["NPI policies", ["npi", "both"]] };
 const visible = (k) => k === FACTUAL || SHOW[st.show][1].includes(kind(k));
 // one SVG shape of radius r centred at (cx, cy); a = extra attributes
 function shape(kd, cx, cy, r, a) {
@@ -375,7 +375,7 @@ function plot(R, listSet) {
   const grey = css("--muted");
   $("#legend").innerHTML =
     `<div class="lg lg-shape"><span>Show</span><span class="showsel" role="group" aria-label="Policies to show">` +
-      Object.entries(SHOW).map(([key, [lab, kds]]) => `<button data-show="${key}" aria-pressed="${st.show === key}">${key === "all" ? "All" : lab.split(" ")[0]}${key === "all" ? "" : " " + kds.map((kd) => icon(kd, st.show === key ? css("--panel") : grey)).join("")}</button>`).join("") + `</span>` +
+      Object.entries(SHOW).map(([key, [lab, kds]]) => `<button data-show="${key}" aria-pressed="${st.show === key}">${key === "all" ? "All" : lab.replace(/ policies$/, "")}${key === "all" ? "" : " " + kds.map((kd) => icon(kd, st.show === key ? css("--panel") : grey)).join("")}</button>`).join("") + `</span>` +
       ["vacc", "npi", "both"].filter((kd) => kinds.includes(kd)).map((kd) => `<span>${icon(kd, grey)}${KIND[kd]}</span>`).join("") +
       `<span>${icon("fact", css("--ink"))}Factual</span>` + (base ? `<span>${icon("fact", css("--panel"), css("--ink"))}Baseline</span>` : "") + `</div>` +
     `<div class="lg lg-color">` + groups.map((gk) => `<span><span class="dot" style="background:${css(GROUP[gk][1])};margin-right:0;width:14px;height:9px;border-radius:2px"></span>${groupLabel(gk)}${gk === FG && factNote().length ? "*" : ""}</span>`).join("") + `</div>` +
