@@ -378,7 +378,7 @@ function plot(R, listSet) {
       Object.entries(SHOW).map(([key, [lab, kds]]) => `<button data-show="${key}" aria-pressed="${st.show === key}">${key === "all" ? "All" : lab.split(" ")[0]}${key === "all" ? "" : " " + kds.map((kd) => icon(kd, st.show === key ? css("--panel") : grey)).join("")}</button>`).join("") + `</span>` +
       ["vacc", "npi", "both"].filter((kd) => kinds.includes(kd)).map((kd) => `<span>${icon(kd, grey)}${KIND[kd]}</span>`).join("") +
       `<span>${icon("fact", css("--ink"))}Factual</span>` + (base ? `<span>${icon("fact", css("--panel"), css("--ink"))}Baseline</span>` : "") + `</div>` +
-    `<div class="lg lg-color">` + groups.map((gk) => `<span><span class="dot" style="background:${css(GROUP[gk][1])};margin-right:0"></span>${groupLabel(gk)}${gk === FG && factNote().length ? "*" : ""}</span>`).join("") + `</div>` +
+    `<div class="lg lg-color">` + groups.map((gk) => `<span><span class="dot" style="background:${css(GROUP[gk][1])};margin-right:0;width:14px;height:9px;border-radius:2px"></span>${groupLabel(gk)}${gk === FG && factNote().length ? "*" : ""}</span>`).join("") + `</div>` +
     `<div class="lg lg-note"><span>${base ? "Shaded: within limits · outlined: top 5" : "Box: policies at the selected level"}</span></div>` +
     (groups.includes(FG) && factNote().length ? `<div class="lg lg-note" style="display:block">` + factNote().map((t) => `<div>* ${t}</div>`).join("") + `</div>` : "");
   $("#legend").querySelectorAll("[data-show]").forEach((b) => (b.onclick = () => { st.show = b.dataset.show; render(); }));
