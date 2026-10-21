@@ -382,8 +382,7 @@ function agePlot(list) {
       t.style.left = Math.min(e.clientX + 12, innerWidth - 270) + "px"; t.style.top = e.clientY + 12 + "px"; };
     el.onmouseleave = () => ($("#tip").hidden = true); });
   const sw = (i) => `<svg class="mk" width="14" height="10" viewBox="0 0 14 10" aria-hidden="true"><defs>${fillDef(`lh${i}`, C[i], HI[i])}</defs><rect x="0.5" y="0.5" width="13" height="9" fill="${paint(i, "lh")}" stroke="${C[i]}"/></svg>`;
-  $("#age-legend").innerHTML = `<div class="lg">` + list.map((k, i) => `<span>${sw(i)}${i + 1} · ${name(k)}</span>`).join("") + `</div>` +
-    `<div class="lg lg-note"><span>Reported cases in each age group per 100K county residents per week, ${base ? "policy minus baseline" : "policy minus Factual"} in the same run, mean ± 1 SD over ${A[b][0].length} runs. A policy's three age bars add up to its Total, which is its ${base ? "extra cases" : "change in cases from Factual"} above. Below 0: fewer cases. Colour = closure group, as above; hatched = same colour as an earlier bar.</span></div>`;
+  $("#age-legend").innerHTML = `<div class="lg">` + list.map((k, i) => `<span>${sw(i)}${i + 1} · ${name(k)}</span>`).join("") + `</div>`;
 }
 
 function plot(R, listSet) {
