@@ -247,7 +247,7 @@ function render() {
     if (!st.fips[st.h]) st.fips[st.h] = ids[0];
     $("#county").innerHTML = ids.map((f) => `<option value="${f}">${esc(C[f].name)}, ${C[f].state}</option>`).join("");
     $("#county").value = st.fips[st.h];
-    $("#ph-note").textContent = st.view === "agg" ? `All ${ids.length} counties pooled` : `${ids.length} counties available`;
+    $("#ph-note").textContent = "";
   } else $("#ph-note").textContent = "County data for this period not added yet";
   let n = 0;
   $("#sections").innerHTML = P.sections.map((s) => { n++; return s.todo ? todoCard(s, n) : `<section class="rq" id="${s.id}"></section>`; }).join("");
@@ -281,7 +281,7 @@ function tsView(el, num) {
   const sum = (a) => a.reduce((x, y) => x + y, 0);
   const g65 = sum(e65) - sum(o65), gu = sum(eu) - sum(ou);
   const word = (g) => g < 0 ? "averted" : "added";
-  const where = agg ? `across all ${Object.keys(T.counties).length} counties` : `in ${T.counties[f].name}, ${T.counties[f].state}`;
+  const where = agg ? `across all counties` : `in ${T.counties[f].name}, ${T.counties[f].state}`;
   const finding = `Compared with the observed rollout, ${esc(polShort)} ${word(g65)} <b>${sgn(g65, Math.abs(g65) < 1 ? 2 : 1)}</b> 65+ ${noun} and ${word(gu)} <b>${sgn(gu, Math.abs(gu) < 1 ? 2 : 1)}</b> under-65 ${noun} per 100K residents ${where} (net <b>${sgn(g65 + gu, Math.abs(g65 + gu) < 1 ? 2 : 1)}</b>).`;
   const tip = `Weekly ${noun} per 100K residents, mean of 30 runs. ${agg ? "Aggregate: all counties pooled (their weekly totals added, divided by their total population)." : "This county only."} `
     + (s.outcome === "d" ? "Deaths are model deaths by infection date (deaths layer, O'Driscoll IFRs), not reported deaths. " : "Reported cases = infections × the county's reporting fraction. ")
@@ -412,7 +412,7 @@ function effView(el, num) {
   const both = active.map((k) => [k, share(k, (d) => d.x < 0 && d.y < 0)]).sort((a, b) => b[1] - a[1]);
   const pct = (v) => `${Math.round(v)}%`;
   const short = (k) => ORD[k][1].split(" (")[0].toLowerCase();
-  let finding = active.length ? `${s.clo === "ah" ? "With the observed closures" : "With everything open"}, share of the ${fipsAll.length} counties where each order beat the observed rollout on both cases and deaths: ` +
+  let finding = active.length ? `${s.clo === "ah" ? "With the observed closures" : "With everything open"}, share of counties where each order beat the observed rollout on both cases and deaths: ` +
     both.map(([k, v]) => `${short(k)} <b>${pct(v)}</b>`).join(", ") + "." : "Select at least one policy.";
   let ctyLine = "";
   if (s.fips && active.length) {
@@ -716,7 +716,7 @@ function nvView(el, num) {
   const V = agg ? N.agg["7"] : N.cty[f]["7"];
   const both = NV.filter(([k]) => V[k].A[0] < 0 && V[k].D[0] < 0), rest = NV.filter(([k]) => !(V[k].A[0] < 0 && V[k].D[0] < 0));
   const inc = both.map(([k]) => V[k].I[0]), low = (x) => x.toLowerCase();
-  const where = agg ? `across ${N.n} counties` : `in ${esc(C[f].name)}, ${C[f].state}`;
+  const where = agg ? `across all counties` : `in ${esc(C[f].name)}, ${C[f].state}`;
   const finding = (both.length ? `Without vaccines, ${both.map(([k]) => NVS[k]).join(" or ")} would have averted cases and deaths compared with the observed policy ${where}, with <b>${sgn(Math.min(...inc), 0)}%</b>${inc.length > 1 ? ` to <b>${sgn(Math.max(...inc), 0)}%</b>` : ""} income lost.`
     : `Without vaccines, no closure averted both cases and deaths compared with the observed policy ${where}.`) +
     (rest.length ? ` With ${rest.map(([k]) => NVS[k]).join(" or ")}, more cases or deaths.` : "");
